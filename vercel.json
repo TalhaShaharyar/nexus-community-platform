@@ -9,6 +9,10 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/admin-reset",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }
