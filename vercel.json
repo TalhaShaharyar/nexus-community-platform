@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "destination": "https://nexus-community-platform-5arai9xgb-contel1.vercel.app/:path*"
+    }
+  ]
+}
