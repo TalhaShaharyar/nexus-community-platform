@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--p:#4B2E92;--a:#C9B8F5;--bg:#fff;--bg2:#F5F2FC;--t:#1A1730;--line:rgba(75,46,146,.18);--danger:#8b1e1e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg2);color:var(--t);font:14px/1.5 Arial,Helvetica,sans-serif}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}.hidden{display:none!important}
+.top{background:var(--p);color:#fff;padding:18px 0}.shell{width:min(1220px,94vw);margin:auto}.topin{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:900;letter-spacing:.08em;font-size:22px}.muted{color:#6d6680;font-size:12px}.layout{display:grid;grid-template-columns:220px 1fr;gap:20px;padding:24px 0 60px}.side,.panel,.card,.login{background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06)}.side{padding:10px;height:max-content;position:sticky;top:20px}.side button{display:block;width:100%;text-align:left;border:0;background:#fff;padding:12px 10px;font-weight:700}.side button.active{background:var(--p);color:#fff}.panel{padding:22px;min-height:600px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.toolbar h2{margin:0;font-size:24px}.btn{border:1px solid var(--p);border-radius:0;background:var(--p);color:#fff;padding:9px 13px;font-weight:700}.btn.secondary{background:#fff;color:var(--p)}.btn.danger{background:var(--danger);border-color:var(--danger)}.btn.small{padding:6px 9px;font-size:12px}.search{width:min(320px,100%);padding:10px;border:1px solid var(--line);background:#fff}.tablewrap{overflow:auto;border:1px solid var(--line)}table{width:100%;border-collapse:collapse;background:#fff}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--bg2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.actions{display:flex;gap:6px;flex-wrap:wrap}.status{display:inline-block;padding:4px 8px;border:1px solid var(--line);background:var(--bg2);font-size:11px;font-weight:700;text-transform:uppercase}.status.published,.status.approved{background:#eef8f0;color:#246b31}.status.rejected{background:#fff0f0;color:#8b1e1e}.status.pending,.status.draft{background:#fff8e8;color:#7b5b00}.empty{padding:30px;text-align:center;color:#6d6680;border:1px dashed var(--line);background:#fff}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field input,.field textarea,.field select{width:100%;padding:10px;border:1px solid var(--line);background:#fff}.field textarea{min-height:120px;resize:vertical}.card{padding:18px;margin-bottom:14px}.card h3{margin:0 0 12px}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.thumb{width:72px;height:52px;object-fit:cover;border:1px solid var(--line);background:var(--bg2)}.login{width:min(460px,92vw);margin:80px auto;padding:28px}.login h1{margin-top:0;color:var(--p)}.notice{padding:10px 12px;background:var(--bg2);border-left:3px solid var(--p);margin-bottom:14px}.toast{position:fixed;right:18px;bottom:18px;background:#1A1730;color:#fff;padding:12px 16px;display:none;z-index:99;max-width:360px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow:auto}.side button{width:auto;white-space:nowrap}.formgrid,.split{grid-template-columns:1fr}.field.full{grid-column:auto}.panel{padding:16px}}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="toast" class="toast"></div>
+<script>
+const SUPABASE_URL='https://ksrxcjspnhhukqacnnvw.supabase.co';
+const SUPABASE_KEY='sb_publishable_EYWjEEyYds-HPQ07z5jg0w_9hi0qEn2';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const app=document.getElementById('app'),toastEl=document.getElementById('toast');
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmt=d=>d?new Date(d).toLocaleString():'—';
+function toast(m){toastEl.textContent=m;toastEl.style.display='block';setTimeout(()=>toastEl.style.display='none',2800)}
+function slugify(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+async function currentAdmin(){
+ const {data:{user}}=await sb.auth.getUser();
+ if(!user)return null;
+ const {data}=await sb.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();
+ return data?user:false;
+}
+async function boot(){
+ if(location.pathname==='/admin-login') return loginPage();
+ const who=await currentAdmin();
+ if(who===null){location.replace('/admin-login');return}
+ if(who===false){await sb.auth.signOut();location.replace('/');return}
+ shell(who);
+}
+function loginPage(){
+ app.innerHTML='<div class="login"><h1>NEXUS Admin</h1><p class="muted">Sign in with your authorized Supabase admin account.</p><form id="loginForm" class="formgrid"><div class="field full"><label>Email</label><input type="email" name="email" required></div><div class="field full"><label>Password</label><input type="password" name="password" required></div><div class="field full"><button class="btn">Sign in</button></div></form></div>';
+ loginForm.onsubmit=async e=>{e.preventDefault();const f=new FormData(loginForm);const {error}=await sb.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)return toast(error.message);const who=await currentAdmin();if(!who){await sb.auth.signOut();toast('This account is not an admin.');return}location.href='/admin'}
+}
+let active='events';
+function shell(user){
+ app.innerHTML='<div class="top"><div class="shell topin"><div><div class="brand">NEXUS ADMIN</div><div style="font-size:12px;opacity:.85">'+esc(user.email)+'</div></div><button class="btn secondary" id="signout">Sign out</button></div></div><div class="shell layout"><aside class="side" id="side"></aside><main class="panel" id="panel"></main></div>';
+ const items=[['events','Events'],['content','Stories & Episodes'],['gallery','Gallery'],['applications','Applications']];
+ side.innerHTML=items.map(([k,l])=>'<button data-sec="'+k+'">'+l+'</button>').join('');
+ side.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.sec;render()});
+ signout.onclick=async()=>{await sb.auth.signOut();location.href='/'};
+ render();
+}
+function navState(){document.querySelectorAll('#side button').forEach(b=>b.classList.toggle('active',b.dataset.sec===active))}
+async function render(){navState();panel.innerHTML='<div class="empty">Loading…</div>';if(active==='events')return eventsView();if(active==='content')return contentView();if(active==='gallery')return galleryView();if(active==='applications')return applicationsView()}
+function csv(rows){
+ const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const out=[['Name','Email','Phone','Registered At'],...rows.map(r=>[r.full_name,r.email,r.phone,r.created_at])].map(r=>r.map(q).join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/csv'}));a.download='nexus-registrants.csv';a.click();URL.revokeObjectURL(a.href)
+}
+async function upload(file,folder){
+ const safe=(file.name||'image').replace(/[^a-zA-Z0-9._-]/g,'-');const path=folder+'/'+Date.now()+'-'+safe;
+ const {error}=await sb.storage.from('nexus-media').upload(path,file,{upsert:false});if(error)throw error;
+ return sb.storage.from('nexus-media').getPublicUrl(path).data.publicUrl;
+}
+async function eventsView(){
+ const [{data:events,error},{data:regs,error:re}]=await Promise.all([
+  sb.from('events').select('*').order('event_date',{ascending:false}),
+  sb.from('registrations').select('id,event_id,full_name,email,phone,created_at').order('created_at',{ascending:false})
+ ]);
+ if(error||re)return panel.innerHTML='<div class="empty">'+esc((error||re).message)+'</div>';
+ panel.innerHTML='<div class="toolbar"><h2>Events</h2><div><input class="search" id="eventSearch" placeholder="Search events"> <button class="btn" id="addEvent">Create event</button></div></div><div id="eventsTable"></div>';
+ const draw=q=>{const list=events.filter(x=>(x.title+' '+(x.location||'')).toLowerCase().includes(q.toLowerCase()));eventsTable.innerHTML=list.length?'<div class="tablewrap"><table><thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Registrants</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+list.map(x=>{const n=regs.filter(r=>r.event_id===x.id).length;return '<tr><td><b>'+esc(x.title)+'</b></td><td>'+esc(fmt(x.event_date))+'</td><td>'+esc(x.location||'—')+'</td><td>'+n+'</td><td><span class="status '+(x.published?'published':'draft')+'">'+(x.published?'Published':'Draft')+'</span></td><td><div class="actions"><button class="btn small secondary" data-reg="'+x.id+'">Registrants</button><button class="btn small secondary" data-edit="'+x.id+'">Edit</button><button class="btn small danger" data-del="'+x.id+'">Delete</button></div></td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">No matching events.</div>';
+ eventsTable.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>eventEditor(events.find(x=>x.id===b.dataset.edit)));
+ eventsTable.querySelectorAll('[data-reg]').forEach(b=>b.onclick=()=>registrantsView(events.find(x=>x.id===b.dataset.reg),regs.filter(r=>r.event_id===b.dataset.reg)));
+ eventsTable.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this event? Registrations linked to it will also be deleted.'))return;const {error}=await sb.from('events').delete().eq('id',b.dataset.del);if(error)return toast(error.message);eventsView()});
+ };
+ draw('');eventSearch.oninput=e=>draw(e.target.value);addEvent.onclick=()=>eventEditor({});
+}
+function registrantsView(event,rows){
+ panel.innerHTML='<div class="toolbar"><div><h2>'+esc(event.title)+'</h2><div class="muted">Registrants</div></div><div><button class="btn secondary" id="backEvents">Back</button> <button class="btn" id="exportCsv">Export CSV</button></div></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.full_name)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.phone||'—')+'</td><td>'+esc(fmt(r.created_at))+'</td></tr>').join('')+'</tbody></table></div>';
+ backEvents.onclick=eventsView;exportCsv.onclick=()=>csv(rows)
+}
+function eventEditor(x){
+ panel.innerHTML='<div class="toolbar"><h2>'+(x.id?'Edit event':'Create event')+'</h2><button class="btn secondary" id="backEvents">Back</button></div><form id="eventForm" class="formgrid"><div class="field"><label>Title</label><input name="title" value="'+esc(x.title||'')+'" required></div><div class="field"><label>Date & time</label><input type="datetime-local" name="event_date" value="'+(x.event_date?new Date(x.event_date).toISOString().slice(0,16):'')+'" required></div><div class="field"><label>Location</label><input name="location" value="'+esc(x.location||'')+'"></div><div class="field"><label>Cover image</label><input type="file" id="eventCover" accept="image/*"></div><div class="field full"><label>Description</label><textarea name="description">'+esc(x.description||'')+'</textarea></div><div class="field"><label><input type="checkbox" name="published" '+(x.published?'checked':'')+'> Published</label></div><div class="field full"><button class="btn">Save event</button></div></form>';
+ backEvents.onclick=eventsView;
+ eventForm.onsubmit=async e=>{e.preventDefault();const f=new FormData(eventForm);let image=x.image_url||null;const file=eventCover.files[0];try{if(file)image=await upload(file,'events')}catch(err){return toast(err.message)}
+ const payload={title:f.get('title').trim(),slug:x.slug||slugify(f.get('title')),description:f.get('description').trim(),event_date:new Date(f.get('event_date')).toISOString(),location:f.get('location').trim(),image_url:image,published:eventForm.published.checked};
+ const q=x.id?sb.from('events').update(payload).eq('id',x.id):sb.from('events').insert(payload);const {error}=await q;if(error)return toast(error.message);toast('Event saved.');eventsView()}
+}
+async function contentView(){
+ const {data:items,error}=await sb.from('stories').select('*').in('category',['story','episode','guide']).order('created_at',{ascending:false});if(error)return panel.innerHTML='<div class="empty">'+esc(error.message)+'</div>';
+ panel.innerHTML='<div class="toolbar"><h2>Stories & Episodes</h2><div><input class="search" id="contentSearch" placeholder="Search content"> <button class="btn" id="addContent">Create content</button></div></div><div id="contentTable"></div>';
+ const draw=q=>{const list=items.filter(x=>(x.title+' '+(x.category||'')).toLowerCase().includes(q.toLowerCase()));contentTable.innerHTML=list.length?'<div class="tablewrap"><table><thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody>'+list.map(x=>'<tr><td><b>'+esc(x.title)+'</b></td><td>'+esc(x.category)+'</td><td><span class="status '+(x.published?'published':'draft')+'">'+(x.published?'Published':'Draft')+'</span></td><td>'+esc(fmt(x.updated_at||x.created_at))+'</td><td><div class="actions"><button class="btn small secondary" data-pub="'+x.id+'">'+(x.published?'Unpublish':'Publish')+'</button><button class="btn small secondary" data-edit="'+x.id+'">Edit</button><button class="btn small danger" data-del="'+x.id+'">Delete</button></div></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No matching content.</div>';
+ contentTable.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>contentEditor(items.find(x=>x.id===b.dataset.edit)));
+ contentTable.querySelectorAll('[data-pub]').forEach(b=>b.onclick=async()=>{const x=items.find(i=>i.id===b.dataset.pub),on=!x.published;const {error}=await sb.from('stories').update({published:on,published_at:on?(x.published_at||new Date().toISOString()):null}).eq('id',x.id);if(error)return toast(error.message);contentView()});
+ contentTable.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this content item?'))return;const {error}=await sb.from('stories').delete().eq('id',b.dataset.del);if(error)return toast(error.message);contentView()})
+ };draw('');contentSearch.oninput=e=>draw(e.target.value);addContent.onclick=()=>contentEditor({category:'story'})
+}
+function contentEditor(x){
+ panel.innerHTML='<div class="toolbar"><h2>'+(x.id?'Edit content':'Create content')+'</h2><button class="btn secondary" id="backContent">Back</button></div><form id="contentForm" class="formgrid"><div class="field"><label>Title</label><input name="title" value="'+esc(x.title||'')+'" required></div><div class="field"><label>Type</label><select name="category"><option value="story" '+(x.category==='story'?'selected':'')+'>Story</option><option value="episode" '+(x.category==='episode'?'selected':'')+'>Episode</option><option value="guide" '+(x.category==='guide'?'selected':'')+'>Guide</option></select></div><div class="field"><label>Author</label><input name="author" value="'+esc(x.author||'')+'"></div><div class="field"><label>Media / YouTube URL</label><input name="media_url" value="'+esc(x.media_url||'')+'"></div><div class="field full"><label>Excerpt</label><textarea name="excerpt">'+esc(x.excerpt||'')+'</textarea></div><div class="field full"><label>Body</label><textarea name="body" style="min-height:220px">'+esc(x.body||'')+'</textarea></div><div class="field"><label>Cover image</label><input type="file" id="contentCover" accept="image/*"></div><div class="field"><label><input type="checkbox" name="published" '+(x.published?'checked':'')+'> Published</label></div><div class="field full"><button class="btn">Save content</button></div></form>';
+ backContent.onclick=contentView;contentForm.onsubmit=async e=>{e.preventDefault();const f=new FormData(contentForm);let image=x.image_url||null;try{if(contentCover.files[0])image=await upload(contentCover.files[0],'content')}catch(err){return toast(err.message)}
+ const pub=contentForm.published.checked,payload={title:f.get('title').trim(),slug:x.slug||slugify(f.get('title'))+'-'+Date.now().toString().slice(-5),category:f.get('category'),author:f.get('author').trim(),excerpt:f.get('excerpt').trim(),body:f.get('body').trim(),media_url:f.get('media_url').trim()||null,image_url:image,published:pub,published_at:pub?(x.published_at||new Date().toISOString()):null};
+ const q=x.id?sb.from('stories').update(payload).eq('id',x.id):sb.from('stories').insert(payload);const {error}=await q;if(error)return toast(error.message);toast('Content saved.');contentView()}
+}
+async function galleryView(){
+ const {data:items,error}=await sb.from('gallery_items').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});if(error)return panel.innerHTML='<div class="empty">'+esc(error.message)+'</div>';
+ panel.innerHTML='<div class="toolbar"><h2>Gallery</h2><div><input class="search" id="gallerySearch" placeholder="Search gallery"> <button class="btn" id="addGallery">Upload image</button></div></div><div id="galleryTable"></div>';
+ const draw=q=>{const list=items.filter(x=>(x.title+' '+(x.caption||'')).toLowerCase().includes(q.toLowerCase()));galleryTable.innerHTML=list.length?'<div class="tablewrap"><table><thead><tr><th>Image</th><th>Title</th><th>Order</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+list.map((x,i)=>'<tr><td><img class="thumb" src="'+esc(x.image_url)+'"></td><td><b>'+esc(x.title||'Image')+'</b><div class="muted">'+esc(x.caption||'')+'</div></td><td>'+esc(x.sort_order??i)+'</td><td><span class="status '+(x.published?'published':'draft')+'">'+(x.published?'Published':'Draft')+'</span></td><td><div class="actions"><button class="btn small secondary" data-move="up" data-id="'+x.id+'">↑</button><button class="btn small secondary" data-move="down" data-id="'+x.id+'">↓</button><button class="btn small danger" data-del="'+x.id+'">Delete</button></div></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No matching images.</div>';
+ galleryTable.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this gallery image?'))return;const {error}=await sb.from('gallery_items').delete().eq('id',b.dataset.del);if(error)return toast(error.message);galleryView()});
+ galleryTable.querySelectorAll('[data-move]').forEach(b=>b.onclick=async()=>{const i=items.findIndex(x=>x.id===b.dataset.id),j=b.dataset.move==='up'?i-1:i+1;if(i<0||j<0||j>=items.length)return;const a=items[i],c=items[j],ao=a.sort_order??i,co=c.sort_order??j;const [u1,u2]=await Promise.all([sb.from('gallery_items').update({sort_order:co}).eq('id',a.id),sb.from('gallery_items').update({sort_order:ao}).eq('id',c.id)]);if(u1.error||u2.error)return toast((u1.error||u2.error).message);galleryView()})
+ };draw('');gallerySearch.oninput=e=>draw(e.target.value);addGallery.onclick=galleryEditor
+}
+function galleryEditor(){
+ panel.innerHTML='<div class="toolbar"><h2>Upload gallery image</h2><button class="btn secondary" id="backGallery">Back</button></div><form id="galleryForm" class="formgrid"><div class="field"><label>Title</label><input name="title" required></div><div class="field"><label>Image</label><input type="file" id="galleryFile" accept="image/*" required></div><div class="field full"><label>Caption</label><textarea name="caption"></textarea></div><div class="field"><label><input type="checkbox" name="published" checked> Published</label></div><div class="field full"><button class="btn">Upload</button></div></form>';
+ backGallery.onclick=galleryView;galleryForm.onsubmit=async e=>{e.preventDefault();const f=new FormData(galleryForm);let url;try{url=await upload(galleryFile.files[0],'gallery')}catch(err){return toast(err.message)}const {data:max}=await sb.from('gallery_items').select('sort_order').order('sort_order',{ascending:false}).limit(1);const {error}=await sb.from('gallery_items').insert({title:f.get('title').trim(),caption:f.get('caption').trim(),image_url:url,published:galleryForm.published.checked,sort_order:(max?.[0]?.sort_order??0)+1});if(error)return toast(error.message);toast('Image uploaded.');galleryView()}
+}
+async function applicationsView(){
+ const {data:items,error}=await sb.from('join_registrations').select('*').order('created_at',{ascending:false});if(error)return panel.innerHTML='<div class="empty">'+esc(error.message)+'</div>';
+ panel.innerHTML='<div class="toolbar"><div><h2>Applications</h2><div class="muted">Ambassador & Partner submissions</div></div><input class="search" id="appSearch" placeholder="Search applications"></div><div id="appsTable"></div>';
+ const draw=q=>{const list=items.filter(x=>(x.full_name+' '+x.email+' '+(x.phone||'')+' '+(x.pathway||'')+' '+(x.city||'')).toLowerCase().includes(q.toLowerCase()));appsTable.innerHTML=list.length?'<div class="tablewrap"><table><thead><tr><th>Applicant</th><th>Pathway</th><th>Contact</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+list.map(x=>'<tr><td><b>'+esc(x.full_name)+'</b><div class="muted">'+esc(x.occupation||'')+(x.university_or_company?' · '+esc(x.university_or_company):'')+'</div></td><td>'+esc(x.pathway)+'</td><td>'+esc(x.email)+'<br>'+esc(x.phone||'—')+'</td><td>'+esc(fmt(x.created_at))+'</td><td><span class="status '+esc(x.status||'pending')+'">'+esc(x.status||'pending')+'</span></td><td><div class="actions"><button class="btn small secondary" data-status="approved" data-id="'+x.id+'">Approve</button><button class="btn small secondary" data-status="rejected" data-id="'+x.id+'">Reject</button></div></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No matching applications.</div>';
+ appsTable.querySelectorAll('[data-status]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('join_registrations').update({status:b.dataset.status}).eq('id',b.dataset.id);if(error)return toast(error.message);applicationsView()})
+ };draw('');appSearch.oninput=e=>draw(e.target.value)
+}
+boot();
+</script>
+</body></html>
