@@ -27,10 +27,13 @@ function slugify(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]
 async function currentAdmin(){
  const {data:{user}}=await sb.auth.getUser();
  if(!user)return null;
- const {data}=await sb.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();
- return data?user:false;
+ const {data}=await sb.from('admin_users').select('user_id,role,active').eq('user_id',user.id).maybeSingle();
+ if(!data||!data.active)return false;
+ user.nexusRole=data.role||'staff';
+ return user;
 }
 async function boot(){
+ if(location.pathname==='/admin-reset') return;
  if(location.pathname==='/admin-login') return loginPage();
  const who=await currentAdmin();
  if(who===null){location.replace('/admin-login');return}
@@ -43,15 +46,17 @@ function loginPage(){
 }
 let active='events';
 function shell(user){
- app.innerHTML='<div class="top"><div class="shell topin"><div><div class="brand">NEXUS ADMIN</div><div style="font-size:12px;opacity:.85">'+esc(user.email)+'</div></div><button class="btn secondary" id="signout">Sign out</button></div></div><div class="shell layout"><aside class="side" id="side"></aside><main class="panel" id="panel"></main></div>';
+ window.nexusAdminRole=user.nexusRole||'staff';
+ app.innerHTML='<div class="top"><div class="shell topin"><div><div class="brand">NEXUS ADMIN</div><div style="font-size:12px;opacity:.85">'+esc(user.email)+' · '+esc(window.nexusAdminRole==='owner'?'Owner':'Team member')+'</div></div><button class="btn secondary" id="signout">Sign out</button></div></div><div class="shell layout"><aside class="side" id="side"></aside><main class="panel" id="panel"></main></div>';
  const items=[['events','Events'],['content','Stories & Episodes'],['gallery','Gallery'],['applications','Applications']];
+ if(window.nexusAdminRole==='owner')items.push(['team','Team Access']);
  side.innerHTML=items.map(([k,l])=>'<button data-sec="'+k+'">'+l+'</button>').join('');
  side.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.sec;render()});
  signout.onclick=async()=>{await sb.auth.signOut();location.href='/'};
  render();
 }
 function navState(){document.querySelectorAll('#side button').forEach(b=>b.classList.toggle('active',b.dataset.sec===active))}
-async function render(){navState();panel.innerHTML='<div class="empty">Loading…</div>';if(active==='events')return eventsView();if(active==='content')return contentView();if(active==='gallery')return galleryView();if(active==='applications')return applicationsView()}
+async function render(){navState();panel.innerHTML='<div class="empty">Loading…</div>';if(active==='events')return eventsView();if(active==='content')return contentView();if(active==='gallery')return galleryView();if(active==='applications')return applicationsView();if(active==='team')return teamView()}
 function csv(rows){
  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  const out=[['Name','Email','Phone','Registered At'],...rows.map(r=>[r.full_name,r.email,r.phone,r.created_at])].map(r=>r.map(q).join(',')).join('\n');
