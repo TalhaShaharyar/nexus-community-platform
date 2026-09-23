@@ -119,6 +119,25 @@ function galleryEditor(){
  panel.innerHTML='<div class="toolbar"><h2>Upload gallery image</h2><button class="btn secondary" id="backGallery">Back</button></div><form id="galleryForm" class="formgrid"><div class="field"><label>Title</label><input name="title" required></div><div class="field"><label>Image</label><input type="file" id="galleryFile" accept="image/*" required></div><div class="field full"><label>Caption</label><textarea name="caption"></textarea></div><div class="field"><label><input type="checkbox" name="published" checked> Published</label></div><div class="field full"><button class="btn">Upload</button></div></form>';
  backGallery.onclick=galleryView;galleryForm.onsubmit=async e=>{e.preventDefault();const f=new FormData(galleryForm);let url;try{url=await upload(galleryFile.files[0],'gallery')}catch(err){return toast(err.message)}const {data:max}=await sb.from('gallery_items').select('sort_order').order('sort_order',{ascending:false}).limit(1);const {error}=await sb.from('gallery_items').insert({title:f.get('title').trim(),caption:f.get('caption').trim(),image_url:url,published:galleryForm.published.checked,sort_order:(max?.[0]?.sort_order??0)+1});if(error)return toast(error.message);toast('Image uploaded.');galleryView()}
 }
+async function teamApi(body){
+ const {data,error}=await sb.functions.invoke('admin-team',{body});
+ if(error)throw error;
+ if(data&&data.error)throw new Error(data.error);
+ return data||{};
+}
+async function teamView(){
+ if(window.nexusAdminRole!=='owner'){panel.innerHTML='<div class="empty">Owner authorization required.</div>';return}
+ panel.innerHTML='<div class="toolbar"><div><h2>Team Access</h2><div class="muted">Invite collaborators without giving them owner privileges.</div></div><button class="btn" id="inviteTeamBtn">Invite team member</button></div><div class="notice"><b>Owner approval stays with you.</b> Team members can prepare drafts, upload media, and view registrations/applications. Publishing, deletions, and application decisions remain owner-only.</div><div id="teamPane"><div class="empty">Loading team…</div></div>';
+ async function load(){
+  try{
+   const data=await teamApi({action:'list'}),members=data.members||[];
+   teamPane.innerHTML=members.length?'<div class="tablewrap"><table><thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Invited</th><th>Actions</th></tr></thead><tbody>'+members.map(m=>'<tr><td><b>'+esc(m.display_name||m.email||'Team member')+'</b><div class="muted">'+esc(m.email||'')+'</div></td><td><span class="status '+(m.role==='owner'?'published':'pending')+'">'+esc(m.role==='owner'?'Owner':'Team member')+'</span></td><td><span class="status '+(m.active?'approved':'rejected')+'">'+(m.active?'Active':'Disabled')+'</span></td><td>'+esc(fmt(m.invited_at||m.created_at))+'</td><td>'+(m.role==='owner'?'Protected owner account':'<button class="btn small secondary" data-member="'+esc(m.user_id)+'" data-active="'+(!m.active)+'">'+(m.active?'Disable access':'Restore access')+'</button>')+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No team members yet.</div>';
+   teamPane.querySelectorAll('[data-member]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await teamApi({action:'set_active',user_id:b.dataset.member,active:b.dataset.active==='true'});toast('Team access updated.');load()}catch(e){toast(e.message);b.disabled=false}});
+  }catch(e){teamPane.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}
+ }
+ inviteTeamBtn.onclick=()=>{teamPane.innerHTML='<div class="card"><h3>Invite a team member</h3><form id="teamInviteForm" class="formgrid"><div class="field"><label>Name</label><input name="display_name"></div><div class="field"><label>Email *</label><input type="email" name="email" required></div><div class="field full"><div class="notice">This person can work on drafts and operations, but owner approval is still required for publishing, deletions, and application decisions.</div></div><div class="field full"><div class="actions"><button class="btn" id="sendInviteBtn">Send invitation</button><button type="button" class="btn secondary" id="cancelInviteBtn">Cancel</button></div></div></form></div>';cancelInviteBtn.onclick=load;teamInviteForm.onsubmit=async e=>{e.preventDefault();const f=new FormData(teamInviteForm);sendInviteBtn.disabled=true;sendInviteBtn.textContent='Sending invitation…';try{await teamApi({action:'invite',email:String(f.get('email')).trim(),display_name:String(f.get('display_name')||'').trim(),site_url:location.origin});toast('Invitation sent.');load()}catch(err){toast(err.message);sendInviteBtn.disabled=false;sendInviteBtn.textContent='Send invitation'}}};
+ load();
+}
 async function applicationsView(){
  const {data:items,error}=await sb.from('join_registrations').select('*').order('created_at',{ascending:false});if(error)return panel.innerHTML='<div class="empty">'+esc(error.message)+'</div>';
  panel.innerHTML='<div class="toolbar"><div><h2>Applications</h2><div class="muted">Ambassador & Partner submissions</div></div><input class="search" id="appSearch" placeholder="Search applications"></div><div id="appsTable"></div>';
