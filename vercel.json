@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/render.js": {
+      "includeFiles": "payload/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/admin",
@@ -14,7 +19,7 @@
     },
     {
       "source": "/:path*",
-      "destination": "/index.html"
+      "destination": "/api/render"
     }
   ]
 }
