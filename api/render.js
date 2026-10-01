@@ -12,8 +12,8 @@ module.exports = async function handler(req, res) {
     }
 
     const html = zlib.gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8');
-    const recoveryGuard = "<script>(()=>{const q=location.search||'',h=location.hash||'';const a=/type=(recovery|invite)/.test(q+h)||/[?&]code=/.test(q)||/access_token=/.test(h);if(location.pathname==='/'&&a){location.replace('/admin-reset'+q+h)}})();<\/script>";
-    const output = html.replace('<title>NEXUS — Construction Without Borders</title>', '<title>NEXUS — Construction Without Borders</title>' + recoveryGuard);
+    const bootGuard = "<script>(()=>{const q=location.search||'',h=location.hash||'';const a=/type=(recovery|invite)/.test(q+h)||/[?&]code=/.test(q)||/access_token=/.test(h);if(a){location.replace('/admin-reset'+q+h);return}if(location.pathname==='/home'){history.replaceState({},'', '/')}})();<\/script>";
+    const output = html.replace('<title>NEXUS — Construction Without Borders</title>', '<title>NEXUS — Construction Without Borders</title>' + bootGuard);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
