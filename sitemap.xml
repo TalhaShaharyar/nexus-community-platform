@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://nexus-community-platform.vercel.app/</loc><priority>1.0</priority></url>
+  <url><loc>https://nexus-community-platform.vercel.app/stories</loc></url>
+  <url><loc>https://nexus-community-platform.vercel.app/episodes</loc></url>
+  <url><loc>https://nexus-community-platform.vercel.app/events</loc></url>
+  <url><loc>https://nexus-community-platform.vercel.app/gallery</loc></url>
+  <url><loc>https://nexus-community-platform.vercel.app/about</loc></url>
+  <url><loc>https://nexus-community-platform.vercel.app/contact</loc></url>
+  <url><loc>https://nexus-community-platform.vercel.app/tell-your-story</loc></url>
+</urlset>
