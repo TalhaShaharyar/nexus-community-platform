@@ -25,7 +25,8 @@ const fmt=d=>d?new Date(d).toLocaleString():'—';
 function toast(m){toastEl.textContent=m;toastEl.style.display='block';setTimeout(()=>toastEl.style.display='none',2800)}
 function slugify(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
 async function currentAdmin(){
- const {data:{user}}=await sb.auth.getUser();
+ const {data:{session}}=await sb.auth.getSession();
+ const user=session?.user;
  if(!user)return null;
  const {data}=await sb.from('admin_users').select('user_id,role,active').eq('user_id',user.id).maybeSingle();
  if(!data||!data.active)return false;
