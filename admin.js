@@ -48,8 +48,9 @@ async function boot(){
 function shell(user){
   currentUser=user;currentRole=user.nexusRole||'staff';
   app.innerHTML='<div class="top"><div class="topin"><div><div class="brand">NEXUS ADMIN</div><div class="who">'+esc(user.email)+' · '+esc(currentRole==='owner'?'Owner':'Team member')+'</div></div><button id="signout" class="btn secondary">Sign out</button></div></div><div class="shell layout"><aside id="side" class="side"></aside><main id="main" class="main"><section id="panel" class="panel"></section></main></div>';
-  const items=[['events','Events'],['forms','Forms'],['content','Stories & Episodes'],['gallery','Gallery'],['applications','Applications'],['pages','Pages & Footer'],['appearance','Appearance'],['announcements','Pop-ups'],['messages','Messages']];
-  if(currentRole==='owner')items.push(['team','Team Access']);
+  const items=[['events','Events'],['content','Stories & Episodes'],['gallery','Gallery'],['applications','Applications'],['messages','Messages']];
+  if(currentRole==='owner')items.splice(1,0,['forms','Forms']);
+  if(currentRole==='owner')items.push(['pages','Pages & Footer'],['appearance','Appearance'],['announcements','Pop-ups'],['team','Team Access']);
   side.innerHTML=items.map(([k,l])=>'<button data-sec="'+k+'"><span>'+l+'</span></button>').join('');
   side.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.sec;render()});signout.onclick=async()=>{await sb.auth.signOut();location.href='/'};render()
 }
