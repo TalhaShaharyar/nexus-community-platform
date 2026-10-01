@@ -21,3 +21,12 @@
 @media(max-width:479px){.gallery{grid-template-columns:1fr}.experience{grid-template-columns:1fr}.footer{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.hero-photo h1{font-size:48px}.page-hero h1{font-size:44px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 
+
+/* CMS v3 */
+.page-hero:before{background:var(--page-color,var(--primary));opacity:.78}
+.microtag{display:inline-block;margin:4px 5px 4px 0;padding:3px 7px;border:1px solid var(--line);background:var(--bg2);color:var(--primary);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.gallery-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.category-gallery{display:grid;gap:46px}.gallery-group h2{font:500 clamp(30px,4vw,44px)/1.05 Georgia,serif;margin:0 0 18px}.gallery-group .gallery{margin-top:0}
+.nexus-notice{position:fixed;z-index:75;background:#fff;color:var(--text);border:1px solid var(--line);box-shadow:0 18px 48px rgba(26,23,48,.2);padding:20px;animation:noticeIn .24s ease both}.notice-popup{right:20px;bottom:20px;width:min(380px,calc(100vw - 40px))}.notice-banner{left:50%;top:104px;transform:translateX(-50%);width:min(900px,92vw)}.nexus-notice h3{font:500 28px/1.05 Georgia,serif;margin:6px 28px 8px 0}.nexus-notice p{margin:0 0 14px}.notice-close{position:absolute;right:10px;top:8px;border:0;background:transparent;font-size:24px;cursor:pointer;color:var(--primary)}@keyframes noticeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.notice-banner{animation:noticeBannerIn .24s ease both}@keyframes noticeBannerIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+.card .media img,.gallery img{content-visibility:auto}
+@media(max-width:768px){.gallery-toolbar{display:block}.gallery-toolbar .filters{margin-bottom:12px}.notice-banner{top:88px}.nexus-notice{padding:16px}}
