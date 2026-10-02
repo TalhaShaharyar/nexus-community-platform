@@ -1,14 +1,49 @@
 {
-  "functions": {
-    "api/render.js": {
-      "includeFiles": "payload/**"
-    }
-  },
-  "redirects": [
+  "headers": [
     {
-      "source": "/",
-      "destination": "/home",
-      "permanent": false
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/app.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/public-cms.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/site.css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/admin.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, max-age=0, must-revalidate"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -26,7 +61,7 @@
     },
     {
       "source": "/:path*",
-      "destination": "/api/render"
+      "destination": "/index.html"
     }
   ]
 }
