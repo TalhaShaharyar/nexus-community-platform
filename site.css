@@ -41,3 +41,17 @@
 .footer-brand .brand-logo{max-height:52px;max-width:220px}
 .footer-brand .brand-tagline{max-width:230px}
 @media(max-width:900px){.brand-tagline{display:none}.brand-logo{max-height:38px;max-width:150px}}
+
+/* Announcement contrast controls */
+.nexus-notice{border:2px solid transparent;box-shadow:0 24px 70px rgba(0,0,0,.30),0 4px 16px rgba(0,0,0,.18)}
+.nexus-notice.notice-high-contrast{background:#fff;color:#171717;border-color:var(--primary);border-top-width:7px}
+.nexus-notice.notice-high-contrast .kicker{color:var(--primary)}
+.nexus-notice.notice-high-contrast .btn{box-shadow:0 5px 14px rgba(0,0,0,.16)}
+.nexus-notice.notice-theme{background:var(--primary);color:#fff;border-color:rgba(255,255,255,.9)}
+.nexus-notice.notice-theme h3,.nexus-notice.notice-theme .kicker,.nexus-notice.notice-theme .notice-close{color:#fff}
+.nexus-notice.notice-theme .btn{background:#fff;color:var(--primary);border-color:#fff}
+.nexus-notice.notice-dark{background:#17191b;color:#fff;border-color:var(--accent)}
+.nexus-notice.notice-dark h3,.nexus-notice.notice-dark .kicker,.nexus-notice.notice-dark .notice-close{color:#fff}
+.nexus-notice.notice-dark .btn{background:var(--accent);color:#17191b;border-color:var(--accent)}
+.notice-popup{right:24px;bottom:24px}
+@media(max-width:768px){.notice-popup{right:12px;bottom:12px;width:calc(100vw - 24px)}}
